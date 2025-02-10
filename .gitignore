@@ -1,0 +1,7 @@
+# generate gitnore file for esp32
+#
+
+.vscode
+build/
+sdkconfig
+sdkconfig.old*.bin
