@@ -1,14 +1,14 @@
 #ifndef PULSE_OXIMETER_H
 #define PULSE_OXIMETER_H
 
-#ifndef I2C_H
 #include "i2c.h"
-#endif
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
 
 // Pulse Oximeter MAX30102 Registers
-#define PUL_OXI_ADDR 0b1010111
-#define PUL_OXI_WRT_ADD 0xAE
-#define PUL_OXI_RD_ADD 0xAF
+// #define PUL_OXI_ADDR (uint8_t)0b1010111
+// #define PUL_OXI_WRT_ADD 0xAE
+// #define PUL_OXI_RD_ADD 0xAF
 #define PUL_OXI_INT_STAT1 0x00
 #define PUL_OXI_INT_STAT2 0x01
 #define PUL_OXI_INT_ENABLE1 0x02
@@ -34,7 +34,7 @@
 #define PUL_OXI_FIFO_ROLLOVER_DIS 0b0 // FIFO Rollover disabled
 #define PUL_OXI_SHDN_OFF 0b0 // Not in shutdown mode
 #define PUL_OXI_SHDN_ON 0b1 // In shutdown mode
-#define PUL_OXI_RESET 0b0 // Not reset
+#define PUL_OXI_RESET_OFF 0b0 // Not reset
 #define PUL_OXI_RESET_ON 0b1 // Reset
 
 // Pulse Oximeter MAX30102 FIFO Configuration
@@ -42,7 +42,7 @@
 
 // Pulse Oximeter MAX30102 Sample Averaging
 #define PUL_OXI_SMP_AVE_1 0b000 // No averaging
-#define PUL_OXI_SMP_AVE 0b001 // 2 samples averaged
+#define PUL_OXI_SMP_AVE_2 0b001 // 2 samples averaged
 #define PUL_OXI_SMP_AVE_4 0b010 // 4 samples averaged
 #define PUL_OXI_SMP_AVE_8 0b011 // 8 samples averaged
 #define PUL_OXI_SMP_AVE_16 0b100 // 16 samples averaged
@@ -92,19 +92,26 @@
 
 class PulseOximeter
 {
+    
 private:
     /* data */
+    i2c* i2c_module;     
+    SemaphoreHandle_t *i2c_mutex;
+
+    enum PUL_OXI_DEV_ADDR {
+        PUL_OXI_ADDR = 0x57,
+        PUL_OXI_WRT_ADD = 0xAE,
+        PUL_OXI_RD_ADD = 0xAF
+    };   
+
+    esp_err_t i2c_read(PUL_OXI_DEV_ADDR device_addres, uint8_t reg,uint8_t* buffer,size_t data_size);
+	esp_err_t i2c_write(PUL_OXI_DEV_ADDR device_addr, uint8_t reg,uint8_t* buffer,size_t data_size);
+
 public:
-    PulseOximeter(/* args */);
+    PulseOximeter( i2c *i2c_dev, SemaphoreHandle_t *i2c_mutex);
+    esp_err_t config();
+    esp_err_t reset();
     ~PulseOximeter();
 };
-
-PulseOximeter::PulseOximeter(/* args */)
-{
-}
-
-PulseOximeter::~PulseOximeter()
-{
-}
 
 #endif // PULSE_OXIMETER_H
